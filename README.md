@@ -88,7 +88,7 @@ tests/
 1. Clone
 
 ```bash
-git clone https://github.com/<your-repo>/jointoit_test.git
+git clone https://github.com/ke1wi/join_to_it_test.git
 cd jointoit_test
 ```
 
