@@ -1,12 +1,12 @@
 WebSocket Notification Server
-• Graceful shutdown із сигналами
-• ConnectionManager
-• SignalHandler
-• Тестами (pytest)
-• Структури проєкту
-• Інструкцій запуску (CLI, Docker)
-• Як тестувати WebSocket
-• Як працює graceful shutdown
+ • Graceful shutdown із сигналами
+ • ConnectionManager
+ • SignalHandler
+ • Тестами (pytest)
+ • Структури проєкту
+ • Інструкцій запуску (CLI, Docker)
+ • Як тестувати WebSocket
+ • Як працює graceful shutdown
 
 ⸻
 
