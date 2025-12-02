@@ -1,113 +1,67 @@
-import time
-
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import JSONResponse
 from loguru import logger
 
-from src.config import NOTIFICATION_MESSAGE_STRIP
 from src.connection_manager import connection_manager
-from src.schemas import NotificationRequest
+from src.schemas import BroadcastRequest, PersonalMessageRequest
 
 router = APIRouter(tags=["REST"])
 
 
 @router.get("/")
 async def root():
-    """Root endpoint for checking server status"""
-    logger.info("[GET][/] Root endpoint accessed")
-    return JSONResponse(
-        {
-            "status": "ok",
-            "service": "WebSocket Notification Server",
-            "endpoints": {"websocket": "/ws", "notify": "/notify", "status": "/status"},
-        }
-    )
+    logger.info("Health check")
+    return {
+        "status": "ok",
+        "service": "WebSocket Notification Server",
+        "websocket_endpoint": "/ws",
+    }
 
 
 @router.get("/status")
 async def get_status():
-    """Server status and connection statistics"""
-    logger.info("[GET][/status] Status endpoint accessed")
     manager = connection_manager
-    active_clients = await manager.get_active_clients()
+    active = await manager.count()
 
     return {
         "status": "running",
-        "active_connections": await manager.count(),
+        "active_connections": active,
         "accepting_new_connections": manager.accepting_connections,
-        "clients": active_clients,
-        "total_clients": len(active_clients),
+        "clients": await manager.get_active_clients(),
     }
 
 
-@router.post("/notify")
-async def notify_all(notification: NotificationRequest):
-    """
-    HTTP endpoint for sending notifications to all clients.
-    Supports broadcast and personal messages.
-    """
-    logger.info(f"[POST][/notify] Notify endpoint accessed: {notification}")
+@router.post("/notify/broadcast")
+async def broadcast_message(payload: BroadcastRequest):
     manager = connection_manager
 
-    if notification.broadcast:
-        await manager.broadcast(notification.message)
-        action = "broadcast"
-    else:
-        action = "personal"
-        raise HTTPException(
-            status_code=501,
-            detail="Personal notifications not implemented in this endpoint",
-        )
+    if not payload.message:
+        raise HTTPException(status_code=400, detail="Message cannot be empty")
+
+    logger.info("Broadcast request", message=payload.message)
+
+    await manager.broadcast(payload.message)
 
     return {
         "status": "sent",
-        "action": action,
-        "message": (
-            notification.message[:NOTIFICATION_MESSAGE_STRIP] + "..."
-            if len(notification.message) > NOTIFICATION_MESSAGE_STRIP
-            else notification.message
-        ),
+        "target": "all",
         "active_connections": await manager.count(),
-        "timestamp": time.time(),
     }
 
 
 @router.post("/notify/{client_id}")
-async def notify_client(client_id: str, message: str):
-    """
-    HTTP endpoint for sending a message to a specific client.
-    Note: This is a demonstration implementation.
-    In a real application, you need to store a mapping of client_id -> WebSocket.
-    """
-    logger.info(
-        f"[POST][/notify/{client_id}] Notify client {client_id} with message: {message}"
-    )
+async def send_to_client(client_id: str, payload: PersonalMessageRequest):
     manager = connection_manager
 
-    # Find WebSocket by client_id
-    async with manager._lock:
-        target_websocket = None
-        for ws, info in manager._connections.items():
-            if info.get("id") == client_id:
-                target_websocket = ws
-                break
+    ws = await manager.get_websocket(client_id)
+    if ws is None:
+        raise HTTPException(status_code=404, detail="Client not connected")
 
-    if target_websocket is None:
-        raise HTTPException(
-            status_code=404, detail=f"Client {client_id} not found or not connected"
-        )
+    logger.info("Sending personal message", client_id=client_id)
 
-    await manager.send_personal_message(
-        f"[Direct message from server]: {message}", target_websocket
-    )
+    await manager.send_personal_message(payload.message, ws)
 
     return {
         "status": "sent",
         "client_id": client_id,
-        "message": (
-            message[:NOTIFICATION_MESSAGE_STRIP] + "..."
-            if len(message) > NOTIFICATION_MESSAGE_STRIP
-            else message
-        ),
-        "timestamp": time.time(),
     }
