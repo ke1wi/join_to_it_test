@@ -1,5 +1,4 @@
 from fastapi import APIRouter, HTTPException
-from fastapi.responses import JSONResponse
 from loguru import logger
 
 from src.connection_manager import connection_manager
