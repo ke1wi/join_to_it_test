@@ -22,20 +22,24 @@ uvicorn src.main:app
 
 ## 🚀 Features
 
-✔ WebSocket Endpoint (/ws)
-• Clients connect via WebSocket
-• Assigned a unique client_id
-• Server tracks all active connections
-• Supports:
-• personal messages
-• broadcast messages
-• system notifications every N seconds
+- WebSocket Endpoint (/ws)
+- Clients connect via WebSocket
+- Assigned a unique client_id
+- Server tracks all active connections
+- Supports:
+- personal messages
+- broadcast messages
+- system notifications every N seconds
 
 ✔ Graceful Shutdown (Key Feature)
 
 The server does not stop immediately on SIGINT/SIGTERM.
 
-Instead: 1. Stops accepting new WebSocket connections 2. Waits until all clients disconnect OR 3. Forces disconnect after 30 minutes (configurable) 4. Only then gives the signal back to uvicorn to terminate safely
+Instead: 
+  1. Stops accepting new WebSocket connections
+  2. Waits until all clients disconnect OR
+  3. Forces disconnect after 30 minutes (configurable)
+  4. Only then gives the signal back to uvicorn to terminate safely
 
 This ensures:
 • zero message loss
