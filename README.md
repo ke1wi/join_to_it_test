@@ -18,10 +18,9 @@ This project is self-contained and runnable with:
 ```bash
 uvicorn src.main:app
 ```
+---
 
-⸻
-
-🚀 Features
+## 🚀 Features
 
 ✔ WebSocket Endpoint (/ws)
 • Clients connect via WebSocket
@@ -58,10 +57,10 @@ Run:
 pytest
 ```
 
-⸻
+---
 
-📂 Project Structure
-
+## 📂 Project Structure
+```
 src/
 ├── main.py # FastAPI app + signal handler initialization
 ├── connection_manager.py # Tracks active WebSocket connections
@@ -77,10 +76,10 @@ tests/
 ├── test_graceful_shutdown.py
 ├── test_websocket_routes.py
 └── helpers/fake_websocket.py
+```
+---
 
-⸻
-
-⚙️ Installation
+## ⚙️ Installation
 
 1. Clone
 
@@ -105,9 +104,9 @@ source .venv/bin/activate
 pip install -r requirements.lock
 ```
 
-⸻
+---
 
-▶️ Running the Server
+## ▶️ Running the Server
 
 Development mode:
 
@@ -127,9 +126,9 @@ Multi-worker (each worker gracefully shutdowns independently):
 uvicorn src.main:app --workers 4
 ```
 
-⸻
+---
 
-🧪 Testing the WebSocket Endpoint
+## 🧪 Testing the WebSocket Endpoint
 
 Using browser console:
 
@@ -154,9 +153,9 @@ wscat -c ws://localhost:8000/ws
 
 Or Use Postman
 
-⸻
+---
 
-🧵 REST Endpoints (Optional)
+## 🧵 REST Endpoints (Optional)
 
 GET /status
 
@@ -166,33 +165,33 @@ POST /broadcast
 
 Broadcasts a message to all WebSocket clients.
 
-⸻
+---
 
-🛑 Graceful Shutdown Explained
+## 🛑 Graceful Shutdown Explained
 
 This project implements an enhanced signal handler that overrides uvicorn’s default behavior.
 
-🔄 Default uvicorn behavior:
+## 🔄 Default uvicorn behavior:
 • When you press Ctrl+C or send SIGTERM →
 uvicorn kills all WebSockets immediately
 
 This breaks graceful shutdown.
 
-🚀 Our custom behavior: 1. Intercept SIGINT/SIGTERM before uvicorn handles it 2. Start graceful shutdown:
+## 🚀 Our custom behavior: 1. Intercept SIGINT/SIGTERM before uvicorn handles it 2. Start graceful shutdown:
 • stop accepting new WebSocket connections
 • wait until all clients disconnect
 • OR force close after timeout (default 30 min) 3. After cleanup:
 • restore original uvicorn signal handlers
 • send SIGINT/SIGTERM back to uvicorn via os.kill() 4. uvicorn performs its normal shutdown cycle cleanly
 
-💥 Force shutdown
+## 💥 Force shutdown
 
 If user presses Ctrl+C 3 times → shutdown is forced immediately
 (configurable via AMOUNT_OF_SIGNALS_TO_FORCE_SHUTDOWN).
 
-⸻
+---
 
-🧪 Running Tests
+## 🧪 Running Tests
 
 Run all tests:
 
@@ -203,9 +202,9 @@ Includes:
 • Tests for forced + graceful shutdown behaviour
 • WebSocket integration tests via TestClient
 
-⸻
+---
 
-🐳 Docker Support (optional)
+## 🐳 Docker Support (optional)
 
 Create Dockerfile:
 
@@ -229,9 +228,9 @@ docker run -p 8000:8000 websocket-server
 
 Graceful shutdown will work with Docker’s SIGTERM.
 
-⸻
+---
 
-📝 Configuration
+## 📝 Configuration
 
 Edit values in src/config.py:
 
@@ -244,14 +243,14 @@ POLLING_INTERVAL = 2
 TIME_TO_WAIT_FOR_SHUTDOWN = 30 * 60 # 30 minutes
 ```
 
-⸻
+---
 
-🎯 Summary
+## 🎯 Summary
 
 This project delivers:
-• Full-featured WebSocket notification service
-• Robust graceful shutdown (safe for production)
-• Clean architecture
-• Proper signal handling (uvicorn-compatible)
-• Test coverage
-• Ready for Docker, Kubernetes, and multi worker deployments
+- Full-featured WebSocket notification service
+- Robust graceful shutdown (safe for production)
+- Clean architecture
+- Proper signal handling (uvicorn-compatible)
+- Test coverage
+- Ready for Docker, Kubernetes, and multi worker deployments
