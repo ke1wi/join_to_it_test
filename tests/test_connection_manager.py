@@ -7,14 +7,15 @@ from tests.helpers.fake_websocket import FakeWebSocket
 @pytest.mark.asyncio
 async def test_connect_and_disconnect():
     manager = ConnectionManager()
-    manager._connections.clear()  # ensure clean state
+    manager._ws_to_info.clear()
+    manager._id_to_ws.clear()
 
     ws = FakeWebSocket()
 
     client_id = await manager.connect(ws)
 
     assert await manager.count() == 1
-    assert client_id.startswith("client_")
+    assert client_id.startswith("cli_")
 
     await manager.disconnect(ws)
     assert await manager.count() == 0
@@ -23,7 +24,8 @@ async def test_connect_and_disconnect():
 @pytest.mark.asyncio
 async def test_broadcast_message():
     manager = ConnectionManager()
-    manager._connections.clear()
+    manager._ws_to_info.clear()
+    manager._id_to_ws.clear()
 
     ws1 = FakeWebSocket()
     ws2 = FakeWebSocket()
@@ -40,7 +42,8 @@ async def test_broadcast_message():
 @pytest.mark.asyncio
 async def test_close_all_connections():
     manager = ConnectionManager()
-    manager._connections.clear()
+    manager._ws_to_info.clear()
+    manager._id_to_ws.clear()
 
     ws1 = FakeWebSocket()
     ws2 = FakeWebSocket()
