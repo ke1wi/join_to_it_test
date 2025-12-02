@@ -1,6 +1,7 @@
 import asyncio
 import os
 import signal
+from functools import partial
 
 from loguru import logger
 
@@ -11,12 +12,11 @@ from src.utils import graceful_shutdown
 
 class SignalHandler:
     """
-    Pre-uvicorn signal handler that performs graceful shutdown of WebSocket clients.
-    Safe for:
-    - uvicorn CLI
-    - uvicorn workers
-    - Docker SIGTERM
-    - press-Ctrl+C multiple times
+    Safe pre-uvicorn signal handler with:
+    - graceful WebSocket shutdown
+    - multi-signal protection (3 attempts → force stop)
+    - uvicorn forwarding
+    - safe async/sync bridging
     """
 
     def __init__(self):
@@ -29,48 +29,63 @@ class SignalHandler:
         }
 
     async def handle(self, sig: signal.Signals):
-        """Main async shutdown logic."""
+        """Main graceful-shutdown flow."""
 
         self.signal_count += 1
-        logger.info(
-            f"Signal received: {sig.name} | count={self.signal_count}/{AMOUNT_OF_SIGNALS_TO_FORCE_SHUTDOWN}"
-        )
-
         if self.signal_count >= AMOUNT_OF_SIGNALS_TO_FORCE_SHUTDOWN:
-            logger.warning("Force shutdown triggered — sending signal back to uvicorn.")
+            logger.warning("Force shutdown activated — forwarding signal immediately.")
             self.restore_original_handlers()
-            os.kill(os.getpid(), sig.value)
+            await self.forward_signal(sig)
             return
 
         if self.shutdown_in_progress:
-            logger.warning("Shutdown already in progress — ignoring signal.")
+            logger.warning(
+                f"Received {sig.name} ({self.signal_count}/{AMOUNT_OF_SIGNALS_TO_FORCE_SHUTDOWN})"
+            )
             return
 
         self.shutdown_in_progress = True
-
         logger.info("Starting graceful shutdown...")
+
         connection_manager.accepting_connections = False
 
-        await graceful_shutdown(connection_manager)
-
-        logger.info("Graceful shutdown finished. Passing signal to uvicorn...")
+        try:
+            await graceful_shutdown(connection_manager)
+        except Exception as e:
+            logger.exception(f"Graceful shutdown failure: {e}")
+        finally:
+            logger.info("Graceful shutdown complete. Forwarding signal to uvicorn.")
 
         self.restore_original_handlers()
-        os.kill(os.getpid(), sig.value)
+        await self.forward_signal(sig)
+
+    async def forward_signal(self, sig: signal.Signals):
+        """
+        Sends signal to uvicorn AFTER the next event loop tick.
+        Prevents race conditions where the signal arrives too early.
+        """
+        loop = asyncio.get_running_loop()
+
+        await asyncio.sleep(0)
+
+        loop.call_soon(os.kill, os.getpid(), sig.value)
 
     def restore_original_handlers(self):
+        """Restore uvicorn's original handlers before forwarding the signal."""
         for sig, handler in self.original.items():
             signal.signal(sig, handler)
 
     def install(self):
-        """Install handlers BEFORE uvicorn installs its own."""
+        """
+        Install our handlers before uvicorn registers its own.
+        """
 
-        def wrapper(sig):
+        def sync_wrapper(sig, *_):
             asyncio.create_task(self.handle(sig))
 
-        # Need explicit sig value binding to avoid late binding bug
-        signal.signal(signal.SIGINT, lambda *_: wrapper(signal.SIGINT))
-        signal.signal(signal.SIGTERM, lambda *_: wrapper(signal.SIGTERM))
+        # partial prevents late binding bugs
+        signal.signal(signal.SIGINT, partial(sync_wrapper, signal.SIGINT))
+        signal.signal(signal.SIGTERM, partial(sync_wrapper, signal.SIGTERM))
 
 
 signal_handler = SignalHandler()
