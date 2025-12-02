@@ -16,8 +16,9 @@ async def notification_loop(manager: ConnectionManager) -> None:
     Background task for periodic notifications.
     """
     counter = 0
-    while True:
-        try:
+
+    try:
+        while True:
             await asyncio.sleep(NOTIFICATION_INTERVAL)
 
             active_count = await manager.count()
@@ -28,13 +29,13 @@ async def notification_loop(manager: ConnectionManager) -> None:
             msg = f"[System] Periodic notification #{counter} - Active clients: {active_count}"
             logger.info(f"Sending periodic notification: {msg}")
 
-            await manager.broadcast(msg)
+            try:
+                await manager.broadcast(msg)
+            except Exception as exc:
+                logger.error(f"Broadcast failure: {exc}")
 
-        except asyncio.CancelledError:
-            break
-        except Exception as exc:
-            logger.error(f"Error in notification loop: {exc}")
-            await asyncio.sleep(POLLING_INTERVAL)
+    except asyncio.CancelledError:
+        logger.info("Notification loop cancelled — stopping cleanly.")
 
 
 async def graceful_shutdown(
@@ -45,11 +46,15 @@ async def graceful_shutdown(
     """
     Graceful shutdown:
       - if no clients → exit immediately
-      - if clients exist → wait up to 30 minutes
-      - after 30 minutes — forcibly close all connections
+      - if clients exist → wait up to wait_seconds
+      - then force close all
     """
 
+    logger.info("Graceful shutdown started.")
+    manager.accepting_connections = False
+
     start_ts = time.monotonic()
+    last_broadcast_time = 0
 
     while True:
         active = await manager.count()
@@ -63,18 +68,27 @@ async def graceful_shutdown(
 
         if remaining <= 0:
             logger.warning(
-                f"{wait_seconds} seconds elapsed. {active} clients remaining. "
-                "Forcibly closing WebSocket connections."
+                f"{wait_seconds} seconds elapsed. {active} clients still connected. "
+                "Closing all connections forcibly..."
             )
-            await manager.close_all(code=1001, reason="Server shutdown (timeout)")
+            try:
+                await manager.close_all(code=1001, reason="Server shutdown (timeout)")
+            except Exception as exc:
+                logger.error(f"Error during forced close_all: {exc}")
             return
+
+        if elapsed - last_broadcast_time >= poll_interval * 10:
+            last_broadcast_time = elapsed
+            try:
+                await manager.broadcast(
+                    f"[System] Server is shutting down. Remaining ~{remaining:.0f} sec..."
+                )
+            except Exception as exc:
+                logger.error(f"Shutdown broadcast failed: {exc}")
 
         logger.info(
             f"Shutdown waiting: active clients = {active}, "
             f"remaining ~{remaining:.0f} sec..."
-        )
-        await manager.broadcast(
-            f"[System] Server is shutting down. Remaining ~{remaining:.0f} sec..."
         )
 
         await asyncio.sleep(poll_interval)
