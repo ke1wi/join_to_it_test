@@ -1,17 +1,3 @@
-WebSocket Notification Server
- - Graceful shutdown із сигналами
- - ConnectionManager
- - SignalHandler
- - Тестами (pytest)
- - Структури проєкту
- - Інструкцій запуску (CLI, Docker)
- - Як тестувати WebSocket
- - Як працює graceful shutdown
-
-⸻
-
-✅ README.md (Production-Grade, Готовий до Github)
-
 # WebSocket Notification Server
 
 A production-ready FastAPI WebSocket notification service with:
