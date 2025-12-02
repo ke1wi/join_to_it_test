@@ -1,0 +1,182 @@
+# ============================================
+#  Python / FastAPI / Uvicorn Project
+# ============================================
+
+# Virtual envs
+.venv/
+venv/
+env/
+ENV/
+
+# Rye environments & cache
+.rye/
+.rye/py/
+.rye/lock/
+
+# Poetry leftovers (if ever used)
+.poetry/
+poetry.lock
+
+# Pipenv
+Pipfile
+Pipfile.lock
+
+# Pyproject metadata
+*.egg-info/
+*.dist-info/
+
+# Bytecode cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Compiled extensions
+*.pyd
+*.so
+*.dll
+*.dylib
+
+# Wheel and build directories
+build/
+dist/
+wheels/
+*.egg
+*.whl
+
+# Logs
+*.log
+*.out
+*.err
+
+# dotenv
+.env
+.env.*
+*.env.backup
+*.env.local
+*.secret
+
+# IDEs
+# PyCharm / JetBrains
+.idea/
+*.iml
+
+# VSCode
+.vscode/
+.history/
+*.code-workspace
+
+# Jupyter / IPython
+.ipynb_checkpoints/
+.profile
+python_history
+
+# MyPy / type checking
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Ruff / flake8 / pylint cache
+.ruff_cache/
+.pytest_cache/
+.cache/
+
+# Coverage files
+.coverage
+.coverage.*
+htmlcov/
+coverage.xml
+cov.xml
+*.cover
+*.py,cover
+
+# FastAPI / Uvicorn ephemeral files
+*.pid
+*.db-journal
+
+# SQLite (just in case)
+*.sqlite3
+*.db
+*.sqlite
+
+# Uploads / media (if you ever add)
+media/
+uploads/
+
+# macOS bullshit
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Thumbnail metadata
+._*
+
+# macOS folders
+.Spotlight-V100
+.Trashes
+
+# Windows
+Thumbs.db
+ehthumbs.db
+desktop.ini
+
+# ===============================
+# Node / Frontend (if ever used)
+# ===============================
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+dist/
+build/
+*.map
+
+# ============================================
+# Tests / CI related
+# ============================================
+
+# pytest cache (duplicated above for safety)
+.pytest_cache/
+
+# Hypothesis
+.hypothesis/
+
+# Test artifacts
+*.tmp
+*.temp
+
+# Coverage
+htmlcov/
+.coverage*
+*.gcov
+
+# ____________________________________________
+# Docker / deployment
+# ____________________________________________
+
+# Docker
+docker-data/
+docker-cache/
+.dockerignore
+
+# Kubernetes
+*.yaml.save
+*.kubeconfig
+
+# ____________________________________________
+# Specific to your project
+# ____________________________________________
+
+# Loguru rotated logs (if you enable file logging)
+logs/
+*.loguru
+
+# Hot reload reloader files
+reload.pid
+
+# Generated PDFs, reports, screenshots
+reports/
+screenshots/
+
+# Local secrets
+secrets/
+secret/
